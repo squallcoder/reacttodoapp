@@ -1,42 +1,91 @@
 import { useState, useEffect } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
 import './App.css'
+import BookSearch from './components/BookSearch'
+import BookList from './components/BookList'
+import TrendingBooks from './components/TrendingBooks'
 
 function App() {
-  const [count, setCount] = useState(0)
-  const [currentTime, setCurrentTime] = useState(0);
+  const [searchResults, setSearchResults] = useState([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [totalResults, setTotalResults] = useState(0)
+  const [currentPage, setCurrentPage] = useState(1)
 
-  useEffect(() => {
-    fetch('/api/time').then(res => res.json()).then(data => {
-      setCurrentTime(data.time);
-    });
-  }, []);
+  const searchBooks = async (query, page = 1) => {
+    if (!query.trim()) return
+
+    setLoading(true)
+    setError(null)
+    
+    try {
+      const response = await fetch(`http://localhost:5000/api/search?q=${encodeURIComponent(query)}&page=${page}&limit=20`)
+      const data = await response.json()
+      
+      if (response.ok) {
+        setSearchResults(data.books)
+        setTotalResults(data.total)
+        setCurrentPage(page)
+        setSearchQuery(query)
+      } else {
+        setError(data.error || 'Failed to search books')
+      }
+    } catch (err) {
+      setError('Failed to connect to the server')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+
+
+  const clearSearch = () => {
+    setSearchResults([])
+    setSearchQuery('')
+    setTotalResults(0)
+    setCurrentPage(1)
+    setError(null)
+  }
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>The current time is {new Date(currentTime * 1000).toLocaleString()}.</p>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+    <div className="App">
+      <header className="App-header">
+        <h1>📚 Book Search</h1>
+        <p>Discover millions of books from the Internet Archive's Open Library</p>
+      </header>
+
+      <main className="App-main">
+        <BookSearch onSearch={searchBooks} onClear={clearSearch} />
+        
+        {error && (
+          <div className="error-message">
+            {error}
+          </div>
+        )}
+
+        {loading && (
+          <div className="loading">
+            <div className="spinner"></div>
+            <p>Searching for books...</p>
+          </div>
+        )}
+
+        {searchResults.length > 0 ? (
+          <BookList 
+            books={searchResults}
+            totalResults={totalResults}
+            currentPage={currentPage}
+            onPageChange={(page) => searchBooks(searchQuery, page)}
+          />
+        ) : !loading && !error && (
+          <TrendingBooks />
+        )}
+      </main>
+
+      <footer className="App-footer">
+        <p>Powered by <a href="https://openlibrary.org" target="_blank" rel="noopener noreferrer">Open Library</a></p>
+      </footer>
+    </div>
   )
 }
 

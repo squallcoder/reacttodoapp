@@ -8,8 +8,9 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "api":"cd api && venv\\Scripts\\flask run --no-debugger"
+    "api": "cd api && venv\\Scripts\\flask run --no-debugger"
   },
+  "proxy": "http://localhost:5000",
   "dependencies": {
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
