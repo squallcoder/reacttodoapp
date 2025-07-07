@@ -3,13 +3,15 @@ from flask_cors import CORS
 import requests
 import json
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='../build', static_url_path='/')
 CORS(app)
 
 # Open Library API base URL
 OPEN_LIBRARY_BASE_URL = "https://openlibrary.org"
 
 @app.route('/api/search', methods=['GET'])
+def index():
+    return app.send_static_file('index.html')
 def search_books():
     """Search for books using Open Library API"""
     query = request.args.get('q', '')
